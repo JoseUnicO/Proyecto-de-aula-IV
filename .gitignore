@@ -1,0 +1,28 @@
+# Archivos compilados de Java
+out/
+*.class
+
+# Archivos de IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Archivos de Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# Archivos de VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# Archivos del sistema operativo
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Logs
+*.log

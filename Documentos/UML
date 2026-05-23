@@ -1,0 +1,104 @@
+@startuml
+
+skin rose
+
+class Libro {
+  - id: String
+  - titulo: String
+  + prestar()
+  + devolver()
+}
+
+class Usuario {
+  - id: String
+  - nombre: String
+}
+
+class Reserva {
+  - idReserva: String
+  + cancelar()
+}
+
+class Prestamo {
+  - idPrestamo: String
+  + devolver()
+}
+
+class GestorLibros {
+  + agregarLibro() throws OperacionInvalidaException
+  + buscarLibro() throws ElementoNoEncontradoException
+}
+
+class GestorUsuarios {
+  + agregarUsuario() throws OperacionInvalidaException
+  + buscarUsuario() throws ElementoNoEncontradoException
+}
+
+class GestorReservas {
+  + agregarReserva() throws OperacionInvalidaException
+  + cancelarReserva() throws OperacionInvalidaException
+}
+
+class GestorPrestamos {
+  + registrarPrestamo() throws OperacionInvalidaException
+  + devolverPrestamo() throws ElementoNoEncontradoException
+}
+
+class GeneradorReportes {
+  + generarReporteGeneral()
+}
+
+class PersistenciaArchivos {
+  + guardarLibros() throws IOException
+  + cargarLibros() throws IOException
+}
+
+' Clases de Excepciones
+
+class BibliotecaException <<exception>> {
+  + BibliotecaException(mensaje: String)
+}
+
+class OperacionInvalidaException <<exception>> {
+  + OperacionInvalidaException(mensaje: String)
+}
+
+class ElementoNoEncontradoException <<exception>> {
+  + ElementoNoEncontradoException(mensaje: String)
+}
+
+class EstructuraVaciaException <<exception>> {
+  + EstructuraVaciaException(mensaje: String)
+}
+
+' Relaciones principales
+Usuario "1" -- "*" Reserva : hace
+Libro "1" -- "*" Reserva : tiene
+Usuario "1" -- "*" Prestamo : realiza
+Libro "1" -- "*" Prestamo : participa
+
+GestorLibros o-- Libro
+GestorUsuarios o-- Usuario
+GestorReservas o-- Reserva
+GestorPrestamos o-- Prestamo
+
+Reserva --> Usuario
+Reserva --> Libro
+
+Prestamo --> Usuario
+Prestamo --> Libro
+
+GeneradorReportes ..> GestorLibros
+GeneradorReportes ..> GestorUsuarios
+GeneradorReportes ..> GestorPrestamos
+
+PersistenciaArchivos ..> Libro
+PersistenciaArchivos ..> Usuario
+PersistenciaArchivos ..> Prestamo
+PersistenciaArchivos ..> Reserva
+
+OperacionInvalidaException --|> BibliotecaException
+ElementoNoEncontradoException --|> BibliotecaException
+EstructuraVaciaException --|> BibliotecaException
+
+@enduml
