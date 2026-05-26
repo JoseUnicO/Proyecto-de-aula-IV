@@ -132,11 +132,6 @@ public class GestorReservas {
                 System.out.println(
                         "[OK] Reserva procesada [" + encontrada[0].getIdReserva() + "] - Estado: NOTIFICADA - Usuario: "
                                 + encontrada[0].getUsuario().getId() + ", Libro: " + encontrada[0].getLibro().getId());
-                try {
-                    PersistenciaArchivos.guardarReservas(obtenerTodasReservas());
-                } catch (IOException ex) {
-                    System.err.println("[ERROR] No se pudo guardar reservas después de notificar: " + ex.getMessage());
-                }
             }
         }
     }
@@ -180,16 +175,10 @@ public class GestorReservas {
                     }
 
                     encontrada[0].cancelar();
+                    cola.eliminar(encontrada[0]);
                     System.out.println("[OK] Reserva cancelada [" + encontrada[0].getIdReserva() +
                             "] - Usuario: " + encontrada[0].getUsuario().getId() +
                             ", Libro: " + encontrada[0].getLibro().getId());
-
-                    try {
-                        PersistenciaArchivos.guardarReservas(obtenerTodasReservas());
-                    } catch (IOException e) {
-                        System.err
-                                .println("[ERROR] No se pudo guardar reservas después de cancelar: " + e.getMessage());
-                    }
                     return;
                 }
             } catch (EstructuraVaciaException e) {
@@ -218,12 +207,6 @@ public class GestorReservas {
                     boolean removed = cola.eliminar(encontrada[0]);
                     if (removed) {
                         System.out.println("[OK] Reserva eliminada de la cola: " + idReserva);
-                        try {
-                            PersistenciaArchivos.guardarReservas(obtenerTodasReservas());
-                        } catch (IOException e) {
-                            System.err.println(
-                                    "[ERROR] No se pudo guardar reservas después de eliminar: " + e.getMessage());
-                        }
                     }
                     return removed;
                 }

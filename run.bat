@@ -77,7 +77,7 @@ echo EJECUTANDO APLICACION
 echo ========================================
 echo.
 
-java --module-path "!JAVAFX_PATH!" --add-modules javafx.controls,javafx.base,javafx.graphics ^
+java --module-path "!JAVAFX_PATH!" --add-modules javafx.controls,javafx.base,javafx.graphics --enable-native-access=javafx.graphics ^
      -cp out gui.BibliotecaApp
 goto fin
 

@@ -105,23 +105,14 @@ public class GestorPrestamos {
             if (reservaSiguiente != null && reservaSiguiente.getUsuario().getId().equals(idUsuario)) {
                 boolean removed = gestorReservas.eliminarReservaPorId(reservaSiguiente.getIdReserva());
                 if (removed) {
-                    try {
-                        utilidades.PersistenciaArchivos.guardarReservas(gestorReservas.obtenerTodasReservas());
-                    } catch (Exception e) {
-                        System.err.println("[ERROR] No se pudo guardar reservas después de prestar: " + e.getMessage());
-                    }
+                    // Removed local save call
                 }
             }
         } catch (Exception e) {
             // Manejo de excepción en proceso de reservas
         }
 
-        // Guardar estado de préstamos actualizados en persistencia
-        try {
-            utilidades.PersistenciaArchivos.guardarPrestamos(obtenerTodosPrestamos());
-        } catch (Exception e) {
-            System.err.println("Error al guardar préstamo: " + e.getMessage());
-        }
+        // Delegado al cierre de la aplicación
 
         return prestamo;
     }
@@ -156,11 +147,7 @@ public class GestorPrestamos {
             // No hay reservas pendientes para el libro
         }
 
-        try {
-            utilidades.PersistenciaArchivos.guardarPrestamos(obtenerTodosPrestamos());
-        } catch (Exception e) {
-            System.err.println("[ERROR] No se pudo guardar los préstamos: " + e.getMessage());
-        }
+        // Delegado al cierre de la aplicación
 
         System.out.println("[OK] Devolución registrada exitosamente");
     }
@@ -183,11 +170,7 @@ public class GestorPrestamos {
         prestamosActivos.eliminar(prestamo);
         historialPrestamos.encolar(prestamo);
 
-        try {
-            utilidades.PersistenciaArchivos.guardarPrestamos(obtenerTodosPrestamos());
-        } catch (Exception e) {
-            System.err.println("[ERROR] No se pudo guardar los préstamos: " + e.getMessage());
-        }
+        // Delegado al cierre de la aplicación
 
         System.out.println("[OK] Préstamo cancelado exitosamente: " + idPrestamo);
     }
@@ -213,14 +196,8 @@ public class GestorPrestamos {
 
         prestamo.setFechaDevolucionEsperada(nuevaFechaDevolucion);
 
-        try {
-            utilidades.PersistenciaArchivos.guardarPrestamos(obtenerTodosPrestamos());
-            System.out.println("[OK] Préstamo editado: " + idPrestamo +
-                    " - Nueva fecha: " + nuevaFechaDevolucion);
-        } catch (Exception e) {
-            System.err.println("[ERROR] No se pudo guardar los cambios: " + e.getMessage());
-            throw new BibliotecaException("Error al persistir los cambios");
-        }
+        System.out.println("[OK] Préstamo editado: " + idPrestamo +
+                " - Nueva fecha: " + nuevaFechaDevolucion);
     }
 
     /**

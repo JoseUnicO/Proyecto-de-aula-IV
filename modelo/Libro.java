@@ -82,6 +82,14 @@ public class Libro implements Comparable<Libro> {
         disponible = true;
     }
 
+    /**
+     * Establece la disponibilidad directamente sin validaciones de negocio.
+     * EXCLUSIVO para uso de la capa de persistencia al restaurar el estado.
+     */
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
+
     public String getId() {
         return id;
     }

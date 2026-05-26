@@ -102,6 +102,22 @@ public class Usuario implements Comparable<Usuario> {
         this.multaAcumulada -= monto;
     }
 
+    /**
+     * Establece los préstamos actuales directamente sin validaciones.
+     * EXCLUSIVO para uso de la capa de persistencia al restaurar el estado.
+     */
+    public void setPrestamosActuales(int prestamosActuales) {
+        this.prestamosActuales = prestamosActuales;
+    }
+
+    /**
+     * Establece la multa acumulada directamente sin validaciones.
+     * EXCLUSIVO para uso de la capa de persistencia al restaurar el estado.
+     */
+    public void setMultaAcumulada(double multaAcumulada) {
+        this.multaAcumulada = multaAcumulada;
+    }
+
     public String getId() {
         return id;
     }

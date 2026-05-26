@@ -80,15 +80,6 @@ public class BibliotecaApp extends Application {
                             datos.estado);
 
                     if (datos.estado == Prestamo.EstadoPrestamo.ACTIVO) {
-
-                        if (libro.isDisponible()) {
-                            try {
-                                libro.prestar();
-                            } catch (excepciones.OperacionInvalidaException e) {
-                                System.err.println("Error al marcar libro prestado: " + e.getMessage());
-                            }
-                        }
-
                         gestorPrestamos.restaurarPrestamo(prestamo);
                     } else {
 
@@ -106,14 +97,16 @@ public class BibliotecaApp extends Application {
                     Usuario usuario = gestorUsuarios.buscarUsuario(datos.idUsuario);
                     Libro libro = gestorLibros.buscarLibro(datos.idLibro);
 
-                    Reserva reserva = new Reserva(
-                            datos.idReserva,
-                            usuario,
-                            libro,
-                            datos.fechaReserva,
-                            datos.estado);
+                    if (datos.estado != Reserva.EstadoReserva.CANCELADA) {
+                        Reserva reserva = new Reserva(
+                                datos.idReserva,
+                                usuario,
+                                libro,
+                                datos.fechaReserva,
+                                datos.estado);
 
-                    gestorReservas.restaurarReserva(reserva);
+                        gestorReservas.restaurarReserva(reserva);
+                    }
                 } catch (ElementoNoEncontradoException e) {
                     System.out.println("Advertencia: No se pudo restaurar reserva: " + datos.idReserva);
                 }
@@ -146,6 +139,14 @@ public class BibliotecaApp extends Application {
         System.out.println("=== CERRANDO SISTEMA - GUARDANDO DATOS ===");
         System.out.println();
 
+        guardarEstadoCompleto();
+
+        System.out.println();
+        System.out.println("=== Sistema cerrado. ¡Hasta luego! ===");
+        System.out.println();
+    }
+
+    public static void guardarEstadoCompleto() {
         try {
             PersistenciaArchivos.guardarLibros(gestorLibros.obtenerTodosLibros());
             System.out.println("✓ OK: Libros guardados correctamente");
@@ -167,10 +168,6 @@ public class BibliotecaApp extends Application {
         } catch (Exception e) {
             System.err.println("✗ ERROR: Error inesperado al guardar: " + e.getMessage());
         }
-
-        System.out.println();
-        System.out.println("=== Sistema cerrado. ¡Hasta luego! ===");
-        System.out.println();
     }
 
     public static GestorLibros getGestorLibros() {
@@ -192,9 +189,7 @@ public class BibliotecaApp extends Application {
     public static void cancelarPrestamoApp(String idPrestamo) {
         try {
             gestorPrestamos.cancelarPrestamo(idPrestamo);
-            PersistenciaArchivos.guardarLibros(gestorLibros.obtenerTodosLibros());
-            PersistenciaArchivos.guardarUsuarios(gestorUsuarios.obtenerTodosUsuarios());
-            PersistenciaArchivos.guardarPrestamos(gestorPrestamos.obtenerTodosPrestamos());
+            guardarEstadoCompleto();
         } catch (Exception e) {
             System.err.println("Error al cancelar préstamo: " + e.getMessage());
             throw new RuntimeException(e);

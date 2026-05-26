@@ -64,13 +64,7 @@ public class PersistenciaArchivos {
                             datos[5]);
 
                     boolean disponible = Boolean.parseBoolean(datos[6]);
-                    if (!disponible) {
-                        try {
-                            libro.prestar();
-                        } catch (OperacionInvalidaException e) {
-
-                        }
-                    }
+                    libro.setDisponible(disponible);
 
                     libros.add(libro);
                 }
@@ -118,15 +112,11 @@ public class PersistenciaArchivos {
                             Integer.parseInt(datos[3]));
 
                     int prestamosActuales = Integer.parseInt(datos[4]);
-                    for (int i = 0; i < prestamosActuales; i++) {
-                        usuario.agregarPrestamo();
-                    }
+                    usuario.setPrestamosActuales(prestamosActuales);
 
                     String textoMulta = datos[5].replace(",", ".");
                     double multa = Double.parseDouble(textoMulta);
-                    if (multa > 0) {
-                        usuario.agregarMulta(multa);
-                    }
+                    usuario.setMultaAcumulada(multa);
 
                     usuarios.add(usuario);
                 }
