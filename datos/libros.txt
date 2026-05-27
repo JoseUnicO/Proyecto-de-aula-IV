@@ -1,6 +1,8 @@
 LIB001|Cien Años de Soledad|Gabriel García Márquez|9780307474728|1967|Ficción|false
-LIB002|Don Quijote de la Mancha|Miguel de Cervantes|9788491050407|1605|Clásicos|false
-LIB003|El Principito|Antoine de Saint-Exupéry|9780156012195|1943|Infantil|false
-LIB004|1984|George Orwell|9780451524935|1949|Ciencia Ficción|false
-LIB005|Estructura de Datos en Java|Mark Allen Weiss|9780132576277|2011|Programación|false
-LIB006|Carlos Ruiz Zafón|La Sombra del Viento|9788408163381|2001|Ficción|false
+LIB002|Don Quijote de la Mancha|Miguel de Cervantes|9788491050407|1605|Clásicos|true
+LIB003|El Principito|Antoine de Saint-Exupéry|9780156012195|1943|Infantil|true
+LIB004|1984|George Orwell|9780451524935|1949|Ciencia Ficción|true
+LIB005|Estructura de Datos en Java|Mark Allen Weiss|9780132576277|2011|Programación|true
+LIB006|Carlos Ruiz Zafón|La Sombra del Viento|9788408163381|2001|Ficción|true
+LIB007|El Señor de los Anillos|J.R.R. Tolkien|9788445077528|1954|Fantasía|false
+LIB008|Dune|Frank Herbert|9780441172719|1965|Ciencia Ficción|false

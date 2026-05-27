@@ -1,0 +1,12 @@
+1. Nombre: Ana López  
+Usuario: ana.lopez  
+Correo: ana.lopez.demo@example.com  
+Contraseña: Demo#2026Ana
+2. Nombre: Carlos Méndez  
+Usuario: carlos.mendez  
+Correo: carlos.mendez.demo@example.com  
+Contraseña: Demo#2026Carlos
+3. Nombre: Sofía Ramírez  
+Usuario: sofia.ramirez  
+Correo: sofia.ramirez.demo@example.com  
+Contraseña: Demo#2026Sofia

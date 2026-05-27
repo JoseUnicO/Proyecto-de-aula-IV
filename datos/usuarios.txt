@@ -1,6 +1,8 @@
-USR001|María González Pérez|maria.gonzalez@email.com|3|2|0.00
-USR002|Carlos Rodríguez Silva|carlos.rodriguez@email.com|5|1|0.00
-USR003|Ana Martínez López|ana.martinez@email.com|3|1|0.00
-USR004|José Hernández Cruz|jose.hernandez@email.com|4|1|0.00
-USR005|Laura Fernández Ruiz|laura.fernandez@email.com|6|1|0.00
+USR001|María González Pérez|maria.gonzalez@email.com|3|1|0.00
+USR002|Carlos Rodríguez Silva|carlos.rodriguez@email.com|5|0|0.00
+USR003|Ana Martínez López|ana.martinez@email.com|3|0|0.00
+USR004|José Hernández Cruz|jose.hernandez@email.com|4|0|0.00
+USR005|Laura Fernández Ruiz|laura.fernandez@email.com|6|0|0.00
 USR006|Roberto Sánchez Morales|roberto.sanchez@email.com|8|0|0.00
+USR007|Valeria Gómez|valeria.gomez@email.com|5|1|0.00
+USR008|Diego Ramírez|diego.ramirez@email.com|3|1|0.00
