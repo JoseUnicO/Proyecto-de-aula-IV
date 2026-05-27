@@ -69,6 +69,9 @@ public class GestorPrestamos {
      * reservas vinculadas.
      */
     public Prestamo registrarPrestamo(String idUsuario, String idLibro, int diasPrestamo) throws BibliotecaException {
+        if (diasPrestamo <= 0) {
+            throw new OperacionInvalidaException("Los días de préstamo deben ser mayores a 0");
+        }
         Usuario usuario = gestorUsuarios.buscarUsuario(idUsuario);
         Libro libro = gestorLibros.buscarLibro(idLibro);
 

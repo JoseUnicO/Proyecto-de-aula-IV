@@ -107,7 +107,12 @@ public class Usuario implements Comparable<Usuario> {
      * EXCLUSIVO para uso de la capa de persistencia al restaurar el estado.
      */
     public void setPrestamosActuales(int prestamosActuales) {
-        this.prestamosActuales = prestamosActuales;
+        // Solo usado por persistencia: evitamos estados imposibles por datos corruptos.
+        if (prestamosActuales < 0) {
+            this.prestamosActuales = 0;
+            return;
+        }
+        this.prestamosActuales = Math.min(prestamosActuales, this.limitePrestamos);
     }
 
     /**
@@ -115,7 +120,8 @@ public class Usuario implements Comparable<Usuario> {
      * EXCLUSIVO para uso de la capa de persistencia al restaurar el estado.
      */
     public void setMultaAcumulada(double multaAcumulada) {
-        this.multaAcumulada = multaAcumulada;
+        // Solo usado por persistencia: no permitir valores negativos.
+        this.multaAcumulada = Math.max(0.0, multaAcumulada);
     }
 
     public String getId() {

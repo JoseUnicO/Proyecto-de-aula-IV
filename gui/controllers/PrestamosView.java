@@ -474,6 +474,10 @@ public class PrestamosView extends VBox {
 
                 try {
                     int diasPrestamo = Integer.parseInt(dias);
+                    if (diasPrestamo <= 0) {
+                        mostrarAlerta("Error", "Los días deben ser mayores a 0", Alert.AlertType.ERROR);
+                        return;
+                    }
                     gestorPrestamos.registrarPrestamo(usuarioSeleccionado.getId(), libroSeleccionado.getId(),
                             diasPrestamo);
                     cargarPrestamos();
