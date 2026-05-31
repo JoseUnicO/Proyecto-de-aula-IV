@@ -1,0 +1,1 @@
+Solo debe hacer doble clic en run.bat, y se instalara todo lo necesario jdk versión 26 y java fx versión 26 automáticamente.
