@@ -1,0 +1,1 @@
+public class LanzadorPruebasGui {public static void main(String[] args){PruebasGui.main(args);}}

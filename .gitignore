@@ -15,7 +15,7 @@ out/
 bin/
 
 # Archivos de VS Code
-.vscode/settings.json
+!/.vscode/settings.json
 .vscode/launch.json
 .vscode/tasks.json
 
@@ -26,3 +26,15 @@ desktop.ini
 
 # Logs
 *.log
+
+# Compilación Maven y configuración privada
+/target/
+/datos/
+/.env
+/.env.*
+/credenciales/
+/conexion*.xml
+/acceso-inicial*.xml
+*.credential.xml
+/copias/
+/backups/

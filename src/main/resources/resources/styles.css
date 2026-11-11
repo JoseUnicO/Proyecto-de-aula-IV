@@ -1,0 +1,9 @@
+.root { -fx-font-family: 'Segoe UI'; -fx-font-size: 14px; }
+.login-box { -fx-background-color: white; -fx-background-radius: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2),20,0,0,6); }
+.login-title { -fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #263449; }
+.login-subtitle, .login-footer { -fx-text-fill: #46556b; }
+.login-label { -fx-font-size: 15px; -fx-font-weight: bold; }
+.login-field { -fx-font-size: 16px; -fx-padding: 10 14; -fx-background-radius: 6; -fx-border-radius: 6; -fx-border-color: #8795a5; }
+.login-error { -fx-text-fill: #a51e2c; -fx-font-weight: bold; }
+.button { -fx-cursor: hand; }
+.table-view { -fx-font-size: 13px; }
