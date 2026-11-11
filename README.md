@@ -12,14 +12,9 @@ Se conservan el administrador y su contraseña. Las credenciales de conexión es
 
 - `src/main/java`: programa y estructuras académicas.
 - `src/main/resources`: imágenes, estilos y revisiones SQL del esquema.
-- `src/test`: pruebas del programa, GUI, consola y BAT.
 - `target`: salida temporal de Maven; se regenera al compilar.
 
 El importador antiguo fue retirado. Quedan ocho tablas: administradores, usuarios, libros, préstamos, reservas, secuencias, operaciones y control de versión. V001 conserva la definición original del esquema y V002 elimina la tabla obsoleta; ambas revisiones permiten verificar versiones e instalar desde cero.
-
-## Verificación
-
-Los fuentes de las pruebas permanecen en `src/test`; la versión actual fue validada con 99 escenarios. Las herramientas locales de ejecución y sus resultados se guardan fuera del repositorio, en `%LOCALAPPDATA%\Biblioteca`.
 
 ## Copias de seguridad
 

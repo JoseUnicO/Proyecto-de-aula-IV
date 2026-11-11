@@ -20,7 +20,7 @@ try {
   if(!(Test-Path -LiteralPath (Join-Path $PSScriptRoot "src\main\resources\resources\$recurso"))){throw "Recurso requerido ausente: $recurso"}
  }
  Write-Host "Compilando con $jdk"
- & $maven.Source -q '-Dmaven.test.skip=true' package dependency:copy-dependencies '-DincludeScope=runtime' '-DoutputDirectory=target/lib'
+ & $maven.Source -q package dependency:copy-dependencies '-DincludeScope=runtime' '-DoutputDirectory=target/lib'
  if($LASTEXITCODE -ne 0){throw "Maven no pudo compilar o copiar recursos (código $LASTEXITCODE)."}
  $jar=Join-Path $PSScriptRoot 'target\biblioteca-3.0.0.jar'
  $contenido=& "$jdk\bin\jar.exe" tf $jar
