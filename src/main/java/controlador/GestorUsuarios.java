@@ -33,7 +33,7 @@ public class GestorUsuarios {
      * @param usuario Objeto Usuario a agregar
      * @throws OperacionInvalidaException si el usuario es nulo o ya existe
      */
-    private void agregarUsuarioInterno(Usuario usuario) throws OperacionInvalidaException  {
+    private void agregarUsuarioInterno(Usuario usuario) throws OperacionInvalidaException {
         if (usuario == null) {
             throw new OperacionInvalidaException("El usuario no puede ser nulo");
         }
@@ -84,9 +84,10 @@ public class GestorUsuarios {
      * @throws ElementoNoEncontradoException si el usuario no existe
      * @throws OperacionInvalidaException    si el usuario tiene préstamos activos
      */
-    private void eliminarUsuarioInterno(String id) throws ElementoNoEncontradoException, OperacionInvalidaException  {
+    private void eliminarUsuarioInterno(String id) throws ElementoNoEncontradoException, OperacionInvalidaException {
         Usuario usuario = buscarUsuario(id);
-        if (referenciado.test(id)) throw new OperacionInvalidaException("No se puede eliminar: existen préstamos o reservas relacionados");
+        if (referenciado.test(id))
+            throw new OperacionInvalidaException("No se puede eliminar: existen préstamos o reservas relacionados");
         if (usuario.getPrestamosActuales() > 0) {
             throw new OperacionInvalidaException("No se puede eliminar un usuario con préstamos activos");
         }
@@ -151,16 +152,59 @@ public class GestorUsuarios {
     public boolean estaVacio() {
         return arbolUsuarios.estaVacio();
     }
-private java.util.function.Predicate<String> referenciado = _ -> false;
-    public void protegerReferencias(java.util.function.Predicate<String> consulta) {referenciado=consulta;}
-    private void actualizarUsuarioInterno(Usuario nuevo) throws BibliotecaException  { buscarUsuario(nuevo.getId()).actualizar(nuevo); }
 
-public void reponer(java.util.List<Usuario> lista){arbolUsuarios.limpiar();for(Usuario x:lista)arbolUsuarios.insertar(x);}
+    private java.util.function.Predicate<String> referenciado = _ -> false;
 
-public void agregarUsuario(Usuario usuario) throws OperacionInvalidaException  { utilidades.SistemaBiblioteca.ejecutar(this, "agregarUsuario", () -> {agregarUsuarioInterno(usuario);return null;}); }
-public void eliminarUsuario(String id) throws ElementoNoEncontradoException, OperacionInvalidaException {try{utilidades.SistemaBiblioteca.ejecutar(this, "eliminarUsuario", ()->{eliminarUsuarioInterno(id);return null;});}catch(BibliotecaException e){if(e instanceof ElementoNoEncontradoException x)throw x;if(e instanceof OperacionInvalidaException x)throw x;throw new IllegalStateException(e);}}
-public void actualizarUsuario(Usuario nuevo) throws BibliotecaException  { utilidades.SistemaBiblioteca.ejecutar(this, "actualizarUsuario", () -> {actualizarUsuarioInterno(nuevo);return null;}); }
-private utilidades.SistemaBiblioteca sistema;
- public void conectar(utilidades.SistemaBiblioteca s){sistema=s;}
- public utilidades.SistemaBiblioteca sistema(){return sistema;}
+    public void protegerReferencias(java.util.function.Predicate<String> consulta) {
+        referenciado = consulta;
+    }
+
+    private void actualizarUsuarioInterno(Usuario nuevo) throws BibliotecaException {
+        buscarUsuario(nuevo.getId()).actualizar(nuevo);
+    }
+
+    public void reponer(java.util.List<Usuario> lista) {
+        arbolUsuarios.limpiar();
+        for (Usuario x : lista)
+            arbolUsuarios.insertar(x);
+    }
+
+    public void agregarUsuario(Usuario usuario) throws OperacionInvalidaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "agregarUsuario", () -> {
+            agregarUsuarioInterno(usuario);
+            return null;
+        });
+    }
+
+    public void eliminarUsuario(String id) throws ElementoNoEncontradoException, OperacionInvalidaException {
+        try {
+            utilidades.SistemaBiblioteca.ejecutar(this, "eliminarUsuario", () -> {
+                eliminarUsuarioInterno(id);
+                return null;
+            });
+        } catch (BibliotecaException e) {
+            if (e instanceof ElementoNoEncontradoException x)
+                throw x;
+            if (e instanceof OperacionInvalidaException x)
+                throw x;
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public void actualizarUsuario(Usuario nuevo) throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "actualizarUsuario", () -> {
+            actualizarUsuarioInterno(nuevo);
+            return null;
+        });
+    }
+
+    private utilidades.SistemaBiblioteca sistema;
+
+    public void conectar(utilidades.SistemaBiblioteca s) {
+        sistema = s;
+    }
+
+    public utilidades.SistemaBiblioteca sistema() {
+        return sistema;
+    }
 }

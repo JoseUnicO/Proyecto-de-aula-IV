@@ -15,15 +15,14 @@ public class Reserva {
     private LocalDate fechaReserva;
     private EstadoReserva estado;
 
-
-
     public enum EstadoReserva {
         PENDIENTE, NOTIFICADA, CANCELADA, ATENDIDA
     }
 
     /**
      * Constructor para crear una nueva reserva con estado inicial PENDIENTE.
-     * Genera un ID único automáticamente y registra la fecha actual como fecha de reserva.
+     * Genera un ID único automáticamente y registra la fecha actual como fecha de
+     * reserva.
      */
     public Reserva(Usuario usuario, Libro libro) {
         this.idReserva = generarId();
@@ -35,7 +34,8 @@ public class Reserva {
 
     /**
      * Constructor completo para cargar reservas existentes en el sistema.
-     * Permite sincronizar el contador para evitar duplicación de IDs al cargar datos.
+     * Permite sincronizar el contador para evitar duplicación de IDs al cargar
+     * datos.
      */
     public Reserva(String idReserva, Usuario usuario, Libro libro,
             LocalDate fechaReserva, EstadoReserva estado) {
@@ -46,7 +46,10 @@ public class Reserva {
         this.estado = estado;
 
     }
-    private String generarId(){return infraestructura.Identificadores.nuevo("reserva","RES-");}
+
+    private String generarId() {
+        return infraestructura.Identificadores.nuevo("reserva", "RES-");
+    }
 
     public void notificar() {
         this.estado = EstadoReserva.NOTIFICADA;
@@ -86,5 +89,8 @@ public class Reserva {
                 fechaReserva,
                 estado);
     }
-public void restaurarEstado(EstadoReserva e){estado=e;}
+
+    public void restaurarEstado(EstadoReserva e) {
+        estado = e;
+    }
 }

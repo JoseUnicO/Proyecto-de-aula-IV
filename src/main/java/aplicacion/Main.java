@@ -31,16 +31,41 @@ public class Main {
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        try{if(iniciarSesionAdmin()){inicializarSistema();try{ejecutarMenuPrincipal();}catch(java.util.NoSuchElementException e){System.out.println("Fin de entrada");}finally{cerrarSistema();}}else{System.out.println("Acceso denegado. Cerrando el sistema...");scanner.close();}}
-        catch(java.util.NoSuchElementException e){System.out.println("Fin de entrada");scanner.close();}
-        catch(IllegalStateException e){System.err.println(e.getMessage());scanner.close();System.exit(1);}
+        try {
+            if (iniciarSesionAdmin()) {
+                inicializarSistema();
+                try {
+                    ejecutarMenuPrincipal();
+                } catch (java.util.NoSuchElementException e) {
+                    System.out.println("Fin de entrada");
+                } finally {
+                    cerrarSistema();
+                }
+            } else {
+                System.out.println("Acceso denegado. Cerrando el sistema...");
+                scanner.close();
+            }
+        } catch (java.util.NoSuchElementException e) {
+            System.out.println("Fin de entrada");
+            scanner.close();
+        } catch (IllegalStateException e) {
+            System.err.println(e.getMessage());
+            scanner.close();
+            System.exit(1);
+        }
     }
 
     private static void inicializarSistema() {
         try {
-            sistema=utilidades.SistemaBiblioteca.cargar(sesion);gestorLibros=sistema.libros;gestorUsuarios=sistema.usuarios;gestorPrestamos=sistema.prestamos;gestorReservas=sistema.reservas;
-            generadorReportes=new GeneradorReportes(gestorLibros,gestorUsuarios,gestorPrestamos);
-        }catch(IOException e){throw new IllegalStateException("Inicio bloqueado: "+e.getMessage(),e);}
+            sistema = utilidades.SistemaBiblioteca.cargar(sesion);
+            gestorLibros = sistema.libros;
+            gestorUsuarios = sistema.usuarios;
+            gestorPrestamos = sistema.prestamos;
+            gestorReservas = sistema.reservas;
+            generadorReportes = new GeneradorReportes(gestorLibros, gestorUsuarios, gestorPrestamos);
+        } catch (IOException e) {
+            throw new IllegalStateException("Inicio bloqueado: " + e.getMessage(), e);
+        }
     }
 
     private static boolean iniciarSesionAdmin() {
@@ -49,13 +74,19 @@ public class Main {
         for (int intento = 1; intento <= intentosMaximos; intento++) {
             String usuario = leerTexto("Usuario: ");
             System.out.print("Contraseña: ");
-            String password = System.console()!=null?new String(System.console().readPassword()):scanner.nextLine();
+            String password = System.console() != null ? new String(System.console().readPassword())
+                    : scanner.nextLine();
 
-            try{
-                sesion=new Autenticacion().ingresar(usuario,password.toCharArray());adminSistema=sesion.administrador();
-                System.out.println("[OK] Acceso concedido. Bienvenido, "+adminSistema.getNombre());return true;
-            }catch(java.sql.SQLException e){throw new IllegalStateException("MySQL no está disponible. No se pudo iniciar sesión.",e);}
-            catch(IllegalArgumentException e){System.out.println(e.getMessage());}
+            try {
+                sesion = new Autenticacion().ingresar(usuario, password.toCharArray());
+                adminSistema = sesion.administrador();
+                System.out.println("[OK] Acceso concedido. Bienvenido, " + adminSistema.getNombre());
+                return true;
+            } catch (java.sql.SQLException e) {
+                throw new IllegalStateException("MySQL no está disponible. No se pudo iniciar sesión.", e);
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
         }
         return false;
     }
@@ -107,6 +138,9 @@ public class Main {
             System.out.println("3. Mostrar todos los libros");
             System.out.println("4. Buscar por categoría");
             System.out.println("5. Buscar por autor");
+            System.out.println("6. Consultar ejemplares");
+            System.out.println("7. Agregar ejemplares");
+            System.out.println("8. Retirar ejemplar");
             System.out.println("0. Volver al menú principal");
 
             int opcion = leerEntero("Seleccione una opción: ");
@@ -116,13 +150,17 @@ public class Main {
                 case 3 -> opcionMostrarLibros();
                 case 4 -> opcionBuscarPorCategoria();
                 case 5 -> opcionBuscarPorAutor();
+                case 6 ->
+                    gestorLibros.buscarLibro(leerTexto("ID del libro: ")).getEjemplares().forEach(System.out::println);
+                case 7 -> gestorLibros.agregarEjemplares(leerTexto("ID del libro: "), leerEntero("Cantidad: "));
+                case 8 -> gestorLibros.retirarEjemplar(leerTexto("ID del libro: "), leerTexto("ID del ejemplar: "));
                 case 0 -> volver = true;
                 default -> System.out.println("Opción no válida.");
             }
         }
     }
 
-    private static void opcionAgregarLibro() {
+    private static void opcionAgregarLibro() throws BibliotecaException {
         System.out.println("\n--- Agregar libro ---");
         String id = leerTexto("ID: ");
         String titulo = leerTexto("Título: ");
@@ -133,7 +171,7 @@ public class Main {
 
         try {
             Libro libro = new Libro(id, titulo, autor, isbn, anio, categoria);
-            gestorLibros.agregarLibro(libro);
+            gestorLibros.agregarLibro(libro, leerEntero("Cantidad de copias: "));
 
             System.out.println("[OK] Libro agregado y guardado correctamente.");
         } catch (OperacionInvalidaException e) {
@@ -285,8 +323,6 @@ public class Main {
         try {
             var prestamo = gestorPrestamos.registrarPrestamo(idUsuario, idLibro);
 
-
-
             System.out.println("[OK] Préstamo registrado y guardado:");
             System.out.println(prestamo);
         } catch (BibliotecaException e) {
@@ -300,8 +336,6 @@ public class Main {
 
         try {
             gestorPrestamos.registrarDevolucion(idPrestamo);
-
-
 
             System.out.println("[OK] Devolución registrada y guardada correctamente.");
         } catch (BibliotecaException e) {
@@ -465,7 +499,9 @@ public class Main {
     }
 
     private static void cerrarSistema() {
-        if(sistema!=null)sistema.close();
-        System.out.println("Sesión cerrada. Los cambios ya están confirmados en MySQL.");scanner.close();
+        if (sistema != null)
+            sistema.close();
+        System.out.println("Sesión cerrada. Los cambios ya están confirmados en MySQL.");
+        scanner.close();
     }
 }

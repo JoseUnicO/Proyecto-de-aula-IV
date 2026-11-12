@@ -7,17 +7,27 @@ import java.time.temporal.ChronoUnit;
 /**
  * Clase que representa un préstamo de un libro a un usuario.
  * Implementa Comparable para permitir ordenamiento por idPrestamo.
- * Controla fechas de préstamo, devolución, estado y cálculos de retrasos y multas.
+ * Controla fechas de préstamo, devolución, estado y cálculos de retrasos y
+ * multas.
  */
 public class Prestamo implements Comparable<Prestamo> {
     private String idPrestamo;
     private Usuario usuario;
     private Libro libro;
+    private String idEjemplar;
+
+    public String getIdEjemplar() {
+        return idEjemplar;
+    }
+
+    public void restaurarEjemplar(String id) {
+        idEjemplar = id;
+    }
+
     private LocalDate fechaPrestamo;
     private LocalDate fechaDevolucionEsperada;
     private LocalDate fechaDevolucionReal;
     private EstadoPrestamo estado;
-
 
     public enum EstadoPrestamo {
         ACTIVO, DEVUELTO, VENCIDO, CANCELADO
@@ -25,7 +35,8 @@ public class Prestamo implements Comparable<Prestamo> {
 
     /**
      * Constructor para crear un nuevo préstamo activo desde un usuario, libro
-     * y días a prestar. Se genera automáticamente un ID único y la fecha de préstamo
+     * y días a prestar. Se genera automáticamente un ID único y la fecha de
+     * préstamo
      * es la fecha actual.
      */
     public Prestamo(Usuario usuario, Libro libro, int diasPrestamo) {
@@ -38,7 +49,8 @@ public class Prestamo implements Comparable<Prestamo> {
     }
 
     /**
-     * Constructor completo para cargar préstamos existentes con todos sus atributos.
+     * Constructor completo para cargar préstamos existentes con todos sus
+     * atributos.
      * Sincroniza el contador estático para evitar IDs duplicados.
      */
     public Prestamo(String idPrestamo, Usuario usuario, Libro libro,
@@ -53,7 +65,10 @@ public class Prestamo implements Comparable<Prestamo> {
         this.estado = estado;
 
     }
-    private String generarId(){return infraestructura.Identificadores.nuevo("prestamo","PREST-");}
+
+    private String generarId() {
+        return infraestructura.Identificadores.nuevo("prestamo", "PREST-");
+    }
 
     public void registrarDevolucion() {
         this.fechaDevolucionReal = LocalDate.now();
@@ -96,7 +111,8 @@ public class Prestamo implements Comparable<Prestamo> {
 
     /**
      * Renueva el préstamo extendiendo la fecha de devolución esperada por los días
-     * adicionales indicados. Solo se pueden renovar préstamos en estado ACTIVO y no vencidos.
+     * adicionales indicados. Solo se pueden renovar préstamos en estado ACTIVO y no
+     * vencidos.
      */
     public void renovar(int diasAdicionales) throws OperacionInvalidaException {
         if (estado != EstadoPrestamo.ACTIVO) {
@@ -151,7 +167,8 @@ public class Prestamo implements Comparable<Prestamo> {
     }
 
     /**
-     * Compara dos préstamos para ordenarlos por su ID, importante para colecciones ordenadas.
+     * Compara dos préstamos para ordenarlos por su ID, importante para colecciones
+     * ordenadas.
      */
     @Override
     public int compareTo(Prestamo otro) {
@@ -160,12 +177,21 @@ public class Prestamo implements Comparable<Prestamo> {
 
     @Override
     public String toString() {
-        return String.format("Prestamo[%s] Usuario: %s, Libro: %s, Estado: %s, Dias retraso: %d",
-                idPrestamo, usuario.getNombre(), libro.getTitulo(), estado, getDiasRetraso());
+        return "Ejemplar: " + idEjemplar + " | "
+                + String.format("Prestamo[%s] Usuario: %s, Libro: %s, Estado: %s, Dias retraso: %d",
+                        idPrestamo, usuario.getNombre(), libro.getTitulo(), estado, getDiasRetraso());
     }
-public void restaurarFechaReal(java.time.LocalDate fecha){fechaDevolucionReal=fecha;}
-public void restaurarDatos(Prestamo p){
- if(!idPrestamo.equals(p.idPrestamo)||usuario!=p.usuario||libro!=p.libro)throw new IllegalArgumentException("Identidad distinta del préstamo");
- fechaPrestamo=p.fechaPrestamo;fechaDevolucionEsperada=p.fechaDevolucionEsperada;fechaDevolucionReal=p.fechaDevolucionReal;estado=p.estado;
-}
+
+    public void restaurarFechaReal(java.time.LocalDate fecha) {
+        fechaDevolucionReal = fecha;
+    }
+
+    public void restaurarDatos(Prestamo p) {
+        if (!idPrestamo.equals(p.idPrestamo) || usuario != p.usuario || libro != p.libro)
+            throw new IllegalArgumentException("Identidad distinta del préstamo");
+        fechaPrestamo = p.fechaPrestamo;
+        fechaDevolucionEsperada = p.fechaDevolucionEsperada;
+        fechaDevolucionReal = p.fechaDevolucionReal;
+        estado = p.estado;
+    }
 }

@@ -37,7 +37,7 @@ public class GestorLibros {
      * @param libro El objeto Libro a agregar
      * @throws OperacionInvalidaException si el libro es nulo o ya existe
      */
-    private void agregarLibroInterno(Libro libro) throws OperacionInvalidaException  {
+    private void agregarLibroInterno(Libro libro) throws OperacionInvalidaException {
         // Validación: el libro no puede ser nulo
         if (libro == null) {
             throw new OperacionInvalidaException("El libro no puede ser nulo");
@@ -95,12 +95,13 @@ public class GestorLibros {
      * @throws ElementoNoEncontradoException si el libro no existe
      * @throws OperacionInvalidaException    si el libro está prestado
      */
-    private void eliminarLibroInterno(String id) throws ElementoNoEncontradoException, OperacionInvalidaException  {
+    private void eliminarLibroInterno(String id) throws ElementoNoEncontradoException, OperacionInvalidaException {
         // Primero buscar el libro para validar su existencia
         Libro libro = buscarLibro(id);
-        if (referenciado.test(id)) throw new OperacionInvalidaException("No se puede eliminar: existen préstamos o reservas relacionados");
+        if (referenciado.test(id))
+            throw new OperacionInvalidaException("No se puede eliminar: existen préstamos o reservas relacionados");
         // Validación de negocio: no se puede eliminar un libro prestado
-        if (!libro.isDisponible()) {
+        if (libro.getEjemplaresPrestados() > 0) {
             throw new OperacionInvalidaException("No se puede eliminar un libro prestado");
         }
         // Eliminar el libro del árbol binario
@@ -208,16 +209,108 @@ public class GestorLibros {
     public boolean estaVacio() {
         return arbolLibros.estaVacio();
     }
-private java.util.function.Predicate<String> referenciado = _ -> false;
-    public void protegerReferencias(java.util.function.Predicate<String> consulta) {referenciado=consulta;}
-    private void actualizarLibroInterno(Libro nuevo) throws BibliotecaException  { buscarLibro(nuevo.getId()).actualizar(nuevo); }
 
-public void reponer(java.util.List<Libro> lista){arbolLibros.limpiar();for(Libro x:lista)arbolLibros.insertar(x);}
+    private java.util.function.Predicate<String> referenciado = _ -> false;
 
-public void agregarLibro(Libro libro) throws OperacionInvalidaException  { utilidades.SistemaBiblioteca.ejecutar(this, "agregarLibro", () -> {agregarLibroInterno(libro);return null;}); }
-public void eliminarLibro(String id) throws ElementoNoEncontradoException, OperacionInvalidaException {try{utilidades.SistemaBiblioteca.ejecutar(this, "eliminarLibro", ()->{eliminarLibroInterno(id);return null;});}catch(BibliotecaException e){if(e instanceof ElementoNoEncontradoException x)throw x;if(e instanceof OperacionInvalidaException x)throw x;throw new IllegalStateException(e);}}
-public void actualizarLibro(Libro nuevo) throws BibliotecaException  { utilidades.SistemaBiblioteca.ejecutar(this, "actualizarLibro", () -> {actualizarLibroInterno(nuevo);return null;}); }
-private utilidades.SistemaBiblioteca sistema;
- public void conectar(utilidades.SistemaBiblioteca s){sistema=s;}
- public utilidades.SistemaBiblioteca sistema(){return sistema;}
+    public void protegerReferencias(java.util.function.Predicate<String> consulta) {
+        referenciado = consulta;
+    }
+
+    private void actualizarLibroInterno(Libro nuevo) throws BibliotecaException {
+        buscarLibro(nuevo.getId()).actualizar(nuevo);
+    }
+
+    public void reponer(java.util.List<Libro> lista) {
+        arbolLibros.limpiar();
+        for (Libro x : lista)
+            arbolLibros.insertar(x);
+    }
+
+    public void agregarLibro(Libro libro) throws OperacionInvalidaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "agregarLibro", () -> {
+            agregarLibroInterno(libro);
+            agregarEjemplaresInterno(libro, 1);
+            return null;
+        });
+    }
+
+    public void eliminarLibro(String id) throws ElementoNoEncontradoException, OperacionInvalidaException {
+        try {
+            utilidades.SistemaBiblioteca.ejecutar(this, "eliminarLibro", () -> {
+                eliminarLibroInterno(id);
+                return null;
+            });
+        } catch (BibliotecaException e) {
+            if (e instanceof ElementoNoEncontradoException x)
+                throw x;
+            if (e instanceof OperacionInvalidaException x)
+                throw x;
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public void actualizarLibro(Libro nuevo) throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "actualizarLibro", () -> {
+            actualizarLibroInterno(nuevo);
+            return null;
+        });
+    }
+
+    public void agregarLibro(Libro libro, int cantidad) throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "agregarLibro", () -> {
+            validarCantidad(cantidad);
+            agregarLibroInterno(libro);
+            agregarEjemplaresInterno(libro, cantidad);
+            return null;
+        });
+    }
+
+    private void validarCantidad(int cantidad) throws OperacionInvalidaException {
+        if (cantidad < 1 || cantidad > 10000)
+            throw new OperacionInvalidaException("La cantidad debe estar entre 1 y 10000");
+    }
+
+    private void agregarEjemplaresInterno(Libro libro, int cantidad) throws OperacionInvalidaException {
+        validarCantidad(cantidad);
+        var lista = new ArrayList<>(libro.getEjemplares());
+        for (int i = 0; i < cantidad; i++)
+            lista.add(new modelo.Ejemplar("EJ-" + java.util.UUID.randomUUID()));
+        libro.reponerEjemplares(lista);
+        if (sistema != null)
+            sistema.reservas.procesarDisponibilidad(libro);
+    }
+
+    public void agregarEjemplares(String id, int cantidad) throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "agregarEjemplares", () -> {
+            agregarEjemplaresInterno(buscarLibro(id), cantidad);
+            return null;
+        });
+    }
+
+    public void retirarEjemplar(String idLibro, String idEjemplar) throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "retirarEjemplar", () -> {
+            Libro libro = buscarLibro(idLibro);
+            var ejemplar = libro.buscarEjemplar(idEjemplar);
+            if (!ejemplar.isDisponible() || (sistema != null && sistema.prestamos.obtenerTodosPrestamos().stream()
+                    .anyMatch(p -> idEjemplar.equals(p.getIdEjemplar()))))
+                throw new OperacionInvalidaException("El ejemplar tiene préstamos relacionados y no puede retirarse");
+            if (sistema != null
+                    && sistema.reservas.cantidadReservasActivas(idLibro) >= libro.getEjemplaresDisponibles())
+                throw new OperacionInvalidaException("El ejemplar está comprometido con una reserva");
+            var lista = new ArrayList<>(libro.getEjemplares());
+            lista.remove(ejemplar);
+            libro.reponerEjemplares(lista);
+            return null;
+        });
+    }
+
+    private utilidades.SistemaBiblioteca sistema;
+
+    public void conectar(utilidades.SistemaBiblioteca s) {
+        sistema = s;
+    }
+
+    public utilidades.SistemaBiblioteca sistema() {
+        return sistema;
+    }
 }

@@ -155,24 +155,24 @@ public class UsuariosView extends VBox {
         tablaUsuarios.getColumns().add(colMulta);
 
         tablaUsuarios.setRowFactory(_ -> {
-        TableRow<Usuario> row = new TableRow<>();
-        row.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
-            final int index = row.getIndex();
+            TableRow<Usuario> row = new TableRow<>();
+            row.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
+                final int index = row.getIndex();
 
-            // Si es una fila vacía, deseleccionar
-            if (row.isEmpty()) {
-                tablaUsuarios.getSelectionModel().clearSelection();
-                event.consume();
-            }
-            // Si es una fila ya seleccionada, deseleccionar
-            else if (index >= 0 && index < tablaUsuarios.getItems().size()
-                    && tablaUsuarios.getSelectionModel().isSelected(index)) {
-                tablaUsuarios.getSelectionModel().clearSelection();
-                event.consume();
-            }
+                // Si es una fila vacía, deseleccionar
+                if (row.isEmpty()) {
+                    tablaUsuarios.getSelectionModel().clearSelection();
+                    event.consume();
+                }
+                // Si es una fila ya seleccionada, deseleccionar
+                else if (index >= 0 && index < tablaUsuarios.getItems().size()
+                        && tablaUsuarios.getSelectionModel().isSelected(index)) {
+                    tablaUsuarios.getSelectionModel().clearSelection();
+                    event.consume();
+                }
+            });
+            return row;
         });
-        return row;
-    });
 
         usuariosFiltrados = new FilteredList<>(usuariosObservable, _ -> true);
         var ordenados = new javafx.collections.transformation.SortedList<>(usuariosFiltrados);
@@ -227,13 +227,14 @@ public class UsuariosView extends VBox {
                 "-fx-background-color: #f8f9fa; " +
                         "-fx-background-radius: 12;");
         Label lblTituloDialogo = new Label();
-ImageView iconoNuevoUsuario = new ImageView(new Image(getClass().getResourceAsStream("/resources/usuario.png")));
-iconoNuevoUsuario.setFitWidth(24);
-iconoNuevoUsuario.setFitHeight(24);
-lblTituloDialogo.setGraphic(iconoNuevoUsuario);
-lblTituloDialogo.setText("Nuevo Usuario");
-lblTituloDialogo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 24));
-lblTituloDialogo.setTextFill(Color.web("#2c3e50"));
+        ImageView iconoNuevoUsuario = new ImageView(
+                new Image(getClass().getResourceAsStream("/resources/usuario.png")));
+        iconoNuevoUsuario.setFitWidth(24);
+        iconoNuevoUsuario.setFitHeight(24);
+        lblTituloDialogo.setGraphic(iconoNuevoUsuario);
+        lblTituloDialogo.setText("Nuevo Usuario");
+        lblTituloDialogo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 24));
+        lblTituloDialogo.setTextFill(Color.web("#2c3e50"));
 
         Label subtitulo = new Label("Complete la información del usuario a registrar");
         subtitulo.setFont(Font.font("Segoe UI", 14));

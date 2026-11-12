@@ -93,7 +93,8 @@ public class PrestamosView extends VBox {
         comboFiltro = new ComboBox<>();
         comboFiltro.getItems().addAll("Todos", "Activos", "Devueltos", "Vencidos", "Cancelados");
         comboFiltro.setValue("Activos");
-        comboFiltro.setPrefWidth(150);comboFiltro.setMinWidth(150);
+        comboFiltro.setPrefWidth(150);
+        comboFiltro.setMinWidth(150);
         comboFiltro.setPrefHeight(44);
         comboFiltro.setStyle(
                 "-fx-font-size: 14px; " +
@@ -207,6 +208,10 @@ public class PrestamosView extends VBox {
         tablaPrestamos.getColumns().add(colId);
         tablaPrestamos.getColumns().add(colUsuario);
         tablaPrestamos.getColumns().add(colLibro);
+        TableColumn<Prestamo, String> colEjemplar = new TableColumn<>("Ejemplar");
+        colEjemplar.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getIdEjemplar()));
+        colEjemplar.setPrefWidth(180);
+        tablaPrestamos.getColumns().add(colEjemplar);
         tablaPrestamos.getColumns().add(colFechaPrestamo);
         tablaPrestamos.getColumns().add(colFechaDevolucion);
         tablaPrestamos.getColumns().add(colEstado);

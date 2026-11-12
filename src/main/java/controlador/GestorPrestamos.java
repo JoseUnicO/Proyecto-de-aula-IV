@@ -46,8 +46,12 @@ public class GestorPrestamos {
         this.gestorReservas = new GestorReservas();
         this.prestamosActivos = new ArbolBinario<>();
         this.historialPrestamos = new Cola<>();
-        gestorLibros.protegerReferencias(id -> obtenerTodosPrestamos().stream().anyMatch(p -> p.getLibro().getId().equals(id)) || gestorReservas.obtenerTodasReservas().stream().anyMatch(r -> r.getLibro().getId().equals(id)));
-        gestorUsuarios.protegerReferencias(id -> obtenerTodosPrestamos().stream().anyMatch(p -> p.getUsuario().getId().equals(id)) || gestorReservas.obtenerTodasReservas().stream().anyMatch(r -> r.getUsuario().getId().equals(id)));
+        gestorLibros.protegerReferencias(
+                id -> obtenerTodosPrestamos().stream().anyMatch(p -> p.getLibro().getId().equals(id)) || gestorReservas
+                        .obtenerTodasReservas().stream().anyMatch(r -> r.getLibro().getId().equals(id)));
+        gestorUsuarios.protegerReferencias(id -> obtenerTodosPrestamos().stream()
+                .anyMatch(p -> p.getUsuario().getId().equals(id))
+                || gestorReservas.obtenerTodasReservas().stream().anyMatch(r -> r.getUsuario().getId().equals(id)));
     }
 
     public GestorReservas getGestorReservas() {
@@ -58,7 +62,7 @@ public class GestorPrestamos {
      * Registra un préstamo con duración por defecto.
      * Invoca el método general con cantidad de días predefinida (14 días).
      */
-    private Prestamo registrarPrestamoInterno(String idUsuario, String idLibro) throws BibliotecaException  {
+    private Prestamo registrarPrestamoInterno(String idUsuario, String idLibro) throws BibliotecaException {
         return registrarPrestamo(idUsuario, idLibro, DIAS_PRESTAMO_DEFECTO);
     }
 
@@ -70,40 +74,46 @@ public class GestorPrestamos {
      * Actualiza estado de libro y usuario, inserta en préstamos activos, y elimina
      * reservas vinculadas.
      */
-    private Prestamo registrarPrestamoInterno(String idUsuario, String idLibro, int diasPrestamo) throws BibliotecaException  {
+    private Prestamo registrarPrestamoInterno(String idUsuario, String idLibro, int diasPrestamo)
+            throws BibliotecaException {
         if (diasPrestamo <= 0) {
             throw new OperacionInvalidaException("Los días de préstamo deben ser mayores a 0");
         }
         Usuario usuario = gestorUsuarios.buscarUsuario(idUsuario);
         Libro libro = gestorLibros.buscarLibro(idLibro);
 
-        var turno = gestorReservas.obtenerSiguienteReserva(idLibro);
-        if (turno != null && !turno.getUsuario().getId().equals(idUsuario))
-            throw new OperacionInvalidaException("Libro reservado para " + turno.getUsuario().getId());
+        if (!libro.isDisponible()) {
+            throw new OperacionInvalidaException("No se puede prestar: libro [" + idLibro + "] no disponible.");
+        }
+
+        if (!gestorReservas.puedePrestar(idLibro, idUsuario, libro.getEjemplaresDisponibles()))
+            throw new OperacionInvalidaException(
+                    "Los ejemplares disponibles están reservados para los primeros turnos");
 
         if (!usuario.puedePedirPrestamo()) {
             throw new OperacionInvalidaException(
                     "Usuario [" + idUsuario + "] no puede solicitar préstamos: límite excedido o multas pendientes.");
         }
 
-        if (!libro.isDisponible()) {
-            throw new OperacionInvalidaException("No se puede prestar: libro [" + idLibro + "] no disponible.");
-        }
-
         // Crear objeto préstamo y actualizar estados relacionados
         Prestamo prestamo = new Prestamo(usuario, libro, diasPrestamo);
         usuario.agregarPrestamo();
-        libro.prestar();
+        var ejemplar = libro.getEjemplares().stream().filter(modelo.Ejemplar::isDisponible).findFirst().orElseThrow();
+        prestamo.restaurarEjemplar(ejemplar.getId());
+        ejemplar.restaurarPrestado(true);
         prestamosActivos.insertar(prestamo);
 
         // Si el préstamo coincide con una reserva existente del mismo usuario, se
         // elimina esa reserva
-        var reservaSiguiente=gestorReservas.obtenerSiguienteReserva(idLibro);
-        if(reservaSiguiente!=null&&reservaSiguiente.getUsuario().getId().equals(idUsuario)){
-            if(!gestorReservas.eliminarReservaPorId(reservaSiguiente.getIdReserva()))throw new OperacionInvalidaException("No se pudo consumir la reserva");
+        var reservaSiguiente = gestorReservas.obtenerReservasActivas(idLibro).stream()
+                .filter(r -> r.getUsuario().getId().equals(idUsuario)).findFirst().orElse(null);
+        if (reservaSiguiente != null && reservaSiguiente.getUsuario().getId().equals(idUsuario)) {
+            if (!gestorReservas.eliminarReservaPorId(reservaSiguiente.getIdReserva()))
+                throw new OperacionInvalidaException("No se pudo consumir la reserva");
             reservaSiguiente.restaurarEstado(modelo.Reserva.EstadoReserva.ATENDIDA);
         }
 
+        gestorReservas.procesarDisponibilidad(libro);
         return prestamo;
     }
 
@@ -113,10 +123,11 @@ public class GestorPrestamos {
      * activos
      * al historial, además de procesar las reservas siguientes en cola.
      */
-    private void registrarDevolucionInterno(String idPrestamo) throws BibliotecaException  {
+    private void registrarDevolucionInterno(String idPrestamo) throws BibliotecaException {
         Prestamo prestamoBusqueda = buscarPrestamoActivo(idPrestamo);
 
-        if (prestamoBusqueda.getLibro().isDisponible() || prestamoBusqueda.getUsuario().getPrestamosActuales() <= 0)
+        if (prestamoBusqueda.getLibro().buscarEjemplar(prestamoBusqueda.getIdEjemplar()).isDisponible()
+                || prestamoBusqueda.getUsuario().getPrestamosActuales() <= 0)
             throw new OperacionInvalidaException("Estado inconsistente del préstamo");
         prestamoBusqueda.registrarDevolucion();
 
@@ -129,7 +140,7 @@ public class GestorPrestamos {
                     diasRetraso, multa));
         }
 
-        prestamoBusqueda.getLibro().devolver();
+        prestamoBusqueda.getLibro().buscarEjemplar(prestamoBusqueda.getIdEjemplar()).restaurarPrestado(false);
         prestamoBusqueda.getUsuario().devolverPrestamo();
         prestamosActivos.eliminar(prestamoBusqueda);
         historialPrestamos.encolar(prestamoBusqueda);
@@ -142,7 +153,6 @@ public class GestorPrestamos {
 
         // Delegado al cierre de la aplicación
 
-
     }
 
     /**
@@ -151,14 +161,15 @@ public class GestorPrestamos {
      * al historial.
      * Persistencia también se actualiza para mantener integridad de datos.
      */
-    private void cancelarPrestamoInterno(String idPrestamo) throws BibliotecaException  {
+    private void cancelarPrestamoInterno(String idPrestamo) throws BibliotecaException {
         Prestamo prestamo = buscarPrestamoActivo(idPrestamo);
 
-        if (prestamo.getLibro().isDisponible() || prestamo.getUsuario().getPrestamosActuales() <= 0)
+        if (prestamo.getLibro().buscarEjemplar(prestamo.getIdEjemplar()).isDisponible()
+                || prestamo.getUsuario().getPrestamosActuales() <= 0)
             throw new OperacionInvalidaException("Estado inconsistente del préstamo");
         prestamo.cancelar();
 
-        prestamo.getLibro().devolver();
+        prestamo.getLibro().buscarEjemplar(prestamo.getIdEjemplar()).restaurarPrestado(false);
 
         prestamo.getUsuario().devolverPrestamo();
 
@@ -167,7 +178,6 @@ public class GestorPrestamos {
         gestorReservas.procesarSiguienteReserva(prestamo.getLibro().getId());
 
         // Delegado al cierre de la aplicación
-
 
     }
 
@@ -178,7 +188,7 @@ public class GestorPrestamos {
      * Permite flexibilidad en extensión manual de plazos.
      */
     private void editarFechaDevolucionInterno(String idPrestamo, LocalDate nuevaFechaDevolucion)
-            throws BibliotecaException  {
+            throws BibliotecaException {
         Prestamo prestamo = buscarPrestamoActivo(idPrestamo);
 
         if (prestamo.getEstado() != Prestamo.EstadoPrestamo.ACTIVO) {
@@ -192,7 +202,6 @@ public class GestorPrestamos {
 
         prestamo.setFechaDevolucionEsperada(nuevaFechaDevolucion);
 
-
     }
 
     /**
@@ -200,7 +209,7 @@ public class GestorPrestamos {
      * Verifica que se pueda renovar (no vencido ni renovado anteriormente) y que no
      * haya multas pendientes.
      */
-    private void renovarPrestamoInterno(String idPrestamo) throws BibliotecaException  {
+    private void renovarPrestamoInterno(String idPrestamo) throws BibliotecaException {
         Prestamo prestamo = buscarPrestamoActivo(idPrestamo);
 
         if (!prestamo.puedeRenovarse()) {
@@ -225,7 +234,8 @@ public class GestorPrestamos {
         try {
             prestamosActivos.recorrerEnOrden(prestamo -> {
                 if (prestamo.getIdPrestamo().equals(idPrestamo) &&
-                        (prestamo.getEstado() == Prestamo.EstadoPrestamo.ACTIVO || prestamo.getEstado() == Prestamo.EstadoPrestamo.VENCIDO)) {
+                        (prestamo.getEstado() == Prestamo.EstadoPrestamo.ACTIVO
+                                || prestamo.getEstado() == Prestamo.EstadoPrestamo.VENCIDO)) {
                     resultado[0] = prestamo;
                 }
             });
@@ -248,7 +258,8 @@ public class GestorPrestamos {
     public void mostrarPrestamosActivos() throws EstructuraVaciaException {
         System.out.println("\n=== PRÉSTAMOS ACTIVOS ===");
         prestamosActivos.recorrerEnOrden(prestamo -> {
-            if ((prestamo.getEstado() == Prestamo.EstadoPrestamo.ACTIVO || prestamo.getEstado() == Prestamo.EstadoPrestamo.VENCIDO)) {
+            if ((prestamo.getEstado() == Prestamo.EstadoPrestamo.ACTIVO
+                    || prestamo.getEstado() == Prestamo.EstadoPrestamo.VENCIDO)) {
                 System.out.println(prestamo);
             }
         });
@@ -329,7 +340,8 @@ public class GestorPrestamos {
      * Usado para reinsertar préstamos cuando es necesario.
      */
     public void restaurarPrestamo(Prestamo prestamo) {
-        if(prestamo.getEstado()==Prestamo.EstadoPrestamo.VENCIDO) prestamo.setEstado(Prestamo.EstadoPrestamo.ACTIVO);
+        if (prestamo.getEstado() == Prestamo.EstadoPrestamo.VENCIDO)
+            prestamo.setEstado(Prestamo.EstadoPrestamo.ACTIVO);
         prestamosActivos.insertar(prestamo);
     }
 
@@ -338,8 +350,11 @@ public class GestorPrestamos {
      * Útil para mantener registro en cola sin perder orden cronológico.
      */
     public void restaurarHistorial(Prestamo prestamo) {
-        if (prestamo.getEstado()==Prestamo.EstadoPrestamo.VENCIDO) {prestamo.setEstado(Prestamo.EstadoPrestamo.ACTIVO); prestamosActivos.insertar(prestamo);}
-        else historialPrestamos.encolar(prestamo);
+        if (prestamo.getEstado() == Prestamo.EstadoPrestamo.VENCIDO) {
+            prestamo.setEstado(Prestamo.EstadoPrestamo.ACTIVO);
+            prestamosActivos.insertar(prestamo);
+        } else
+            historialPrestamos.encolar(prestamo);
     }
 
     /**
@@ -362,17 +377,66 @@ public class GestorPrestamos {
 
         return prestamos;
     }
-public void reponer(java.util.List<Prestamo> lista) {prestamosActivos.limpiar(); historialPrestamos.limpiar();for(Prestamo p:lista) {if(p.getEstado()==Prestamo.EstadoPrestamo.ACTIVO || p.getEstado()==Prestamo.EstadoPrestamo.VENCIDO) prestamosActivos.insertar(p);else historialPrestamos.encolar(p);}}
 
+    public void reponer(java.util.List<Prestamo> lista) {
+        prestamosActivos.limpiar();
+        historialPrestamos.limpiar();
+        for (Prestamo p : lista) {
+            if (p.getEstado() == Prestamo.EstadoPrestamo.ACTIVO || p.getEstado() == Prestamo.EstadoPrestamo.VENCIDO)
+                prestamosActivos.insertar(p);
+            else
+                historialPrestamos.encolar(p);
+        }
+    }
 
-public Prestamo registrarPrestamo(String idUsuario, String idLibro) throws BibliotecaException  { return utilidades.SistemaBiblioteca.ejecutar(this, "registrarPrestamo", () -> {return registrarPrestamoInterno(idUsuario,idLibro);}); }
-public Prestamo registrarPrestamo(String idUsuario, String idLibro, int diasPrestamo) throws BibliotecaException  { return utilidades.SistemaBiblioteca.ejecutar(this, "registrarPrestamo", () -> {return registrarPrestamoInterno(idUsuario,idLibro,diasPrestamo);}); }
-public void registrarDevolucion(String idPrestamo) throws BibliotecaException  { utilidades.SistemaBiblioteca.ejecutar(this, "registrarDevolucion", () -> {registrarDevolucionInterno(idPrestamo);return null;}); }
-public void cancelarPrestamo(String idPrestamo) throws BibliotecaException  { utilidades.SistemaBiblioteca.ejecutar(this, "cancelarPrestamo", () -> {cancelarPrestamoInterno(idPrestamo);return null;}); }
-public void editarFechaDevolucion(String idPrestamo, LocalDate nuevaFechaDevolucion)
-            throws BibliotecaException  { utilidades.SistemaBiblioteca.ejecutar(this, "editarFechaDevolucion", () -> {editarFechaDevolucionInterno(idPrestamo,nuevaFechaDevolucion);return null;}); }
-public void renovarPrestamo(String idPrestamo) throws BibliotecaException  { utilidades.SistemaBiblioteca.ejecutar(this, "renovarPrestamo", () -> {renovarPrestamoInterno(idPrestamo);return null;}); }
-private utilidades.SistemaBiblioteca sistema;
- public void conectar(utilidades.SistemaBiblioteca s){sistema=s;}
- public utilidades.SistemaBiblioteca sistema(){return sistema;}
+    public Prestamo registrarPrestamo(String idUsuario, String idLibro) throws BibliotecaException {
+        return utilidades.SistemaBiblioteca.ejecutar(this, "registrarPrestamo", () -> {
+            return registrarPrestamoInterno(idUsuario, idLibro);
+        });
+    }
+
+    public Prestamo registrarPrestamo(String idUsuario, String idLibro, int diasPrestamo) throws BibliotecaException {
+        return utilidades.SistemaBiblioteca.ejecutar(this, "registrarPrestamo", () -> {
+            return registrarPrestamoInterno(idUsuario, idLibro, diasPrestamo);
+        });
+    }
+
+    public void registrarDevolucion(String idPrestamo) throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "registrarDevolucion", () -> {
+            registrarDevolucionInterno(idPrestamo);
+            return null;
+        });
+    }
+
+    public void cancelarPrestamo(String idPrestamo) throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "cancelarPrestamo", () -> {
+            cancelarPrestamoInterno(idPrestamo);
+            return null;
+        });
+    }
+
+    public void editarFechaDevolucion(String idPrestamo, LocalDate nuevaFechaDevolucion)
+            throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "editarFechaDevolucion", () -> {
+            editarFechaDevolucionInterno(idPrestamo, nuevaFechaDevolucion);
+            return null;
+        });
+    }
+
+    public void renovarPrestamo(String idPrestamo) throws BibliotecaException {
+        utilidades.SistemaBiblioteca.ejecutar(this, "renovarPrestamo", () -> {
+            renovarPrestamoInterno(idPrestamo);
+            return null;
+        });
+    }
+
+    private utilidades.SistemaBiblioteca sistema;
+
+    public void conectar(utilidades.SistemaBiblioteca s) {
+        sistema = s;
+    }
+
+    public utilidades.SistemaBiblioteca sistema() {
+        return sistema;
+    }
 }

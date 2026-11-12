@@ -13,7 +13,6 @@ import javafx.stage.Stage;
 import modelo.Admin;
 import seguridad.Autenticacion;
 
-
 public class LoginController {
 
     private Stage stage;
@@ -191,13 +190,17 @@ public class LoginController {
             }
 
             try {
-                admin=gui.TareasBD.invocar(()->{
-                    seguridad.Sesion sesion=new Autenticacion().ingresar(usuario,password.toCharArray());
-                    gui.BibliotecaApp.abrir(sesion);return sesion.administrador();
+                admin = gui.TareasBD.invocar(() -> {
+                    seguridad.Sesion sesion = new Autenticacion().ingresar(usuario, password.toCharArray());
+                    gui.BibliotecaApp.abrir(sesion);
+                    return sesion.administrador();
                 });
-                txtPassword.clear();abrirDashboard();
-            }catch(Exception e){
-                txtPassword.clear();lblError.setText(e.getMessage());lblError.setVisible(true);
+                txtPassword.clear();
+                abrirDashboard();
+            } catch (Exception e) {
+                txtPassword.clear();
+                lblError.setText(e.getMessage());
+                lblError.setVisible(true);
             }
         });
 
@@ -222,7 +225,5 @@ public class LoginController {
         DashboardController dashboard = new DashboardController(stage, admin);
         dashboard.show();
     }
-
-
 
 }

@@ -15,10 +15,11 @@ public class Libro implements Comparable<Libro> {
     private String isbn;
     private int anioPublicacion;
     private String categoria;
-    private boolean disponible;
+    private final java.util.List<Ejemplar> ejemplares = new java.util.ArrayList<>();
 
     /**
-     * Constructor que crea una instancia de Libro con validación previa de los datos.
+     * Constructor que crea una instancia de Libro con validación previa de los
+     * datos.
      * Inicializa el estado de disponibilidad como true (disponible).
      */
     public Libro(String id, String titulo, String autor, String isbn, int anioPublicacion, String categoria)
@@ -30,12 +31,13 @@ public class Libro implements Comparable<Libro> {
         this.isbn = isbn;
         this.anioPublicacion = anioPublicacion;
         this.categoria = categoria;
-        this.disponible = true;
+
     }
 
     /**
      * Método privado que valida los datos de un libro antes de asignarlos.
-     * Lanza OperacionInvalidaException si algún dato es inválido, ayudando a controlar
+     * Lanza OperacionInvalidaException si algún dato es inválido, ayudando a
+     * controlar
      * errores y mantener la integridad de los objetos Libro.
      */
     private void validarDatos(String id, String titulo, String autor, String isbn, int anio, String categoria)
@@ -62,32 +64,33 @@ public class Libro implements Comparable<Libro> {
 
     /**
      * Marca el libro como prestado cambiando su estado de disponibilidad a false.
-     * Lanza OperacionInvalidaException si ya está prestado para evitar inconsistencias.
+     * Lanza OperacionInvalidaException si ya está prestado para evitar
+     * inconsistencias.
      */
-    public void prestar() throws OperacionInvalidaException {
-        if (!disponible) {
-            throw new OperacionInvalidaException("El libro ya está prestado");
-        }
-        disponible = false;
+    public java.util.List<Ejemplar> getEjemplares() {
+        return java.util.List.copyOf(ejemplares);
     }
 
-    /**
-     * Marca el libro como disponible cambiando su estado de disponibilidad a true.
-     * Lanza OperacionInvalidaException si el libro no está prestado para evitar errores lógicos.
-     */
-    public void devolver() throws OperacionInvalidaException {
-        if (disponible) {
-            throw new OperacionInvalidaException("El libro no está prestado");
-        }
-        disponible = true;
+    public int getTotalEjemplares() {
+        return ejemplares.size();
     }
 
-    /**
-     * Establece la disponibilidad directamente sin validaciones de negocio.
-     * EXCLUSIVO para uso de la capa de persistencia al restaurar el estado.
-     */
-    public void setDisponible(boolean disponible) {
-        this.disponible = disponible;
+    public int getEjemplaresDisponibles() {
+        return (int) ejemplares.stream().filter(Ejemplar::isDisponible).count();
+    }
+
+    public int getEjemplaresPrestados() {
+        return getTotalEjemplares() - getEjemplaresDisponibles();
+    }
+
+    public void reponerEjemplares(java.util.List<Ejemplar> lista) {
+        ejemplares.clear();
+        ejemplares.addAll(lista);
+    }
+
+    public Ejemplar buscarEjemplar(String id) {
+        return ejemplares.stream().filter(e -> e.getId().equals(id)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("Ejemplar inexistente: " + id));
     }
 
     public String getId() {
@@ -115,11 +118,12 @@ public class Libro implements Comparable<Libro> {
     }
 
     public boolean isDisponible() {
-        return disponible;
+        return getEjemplaresDisponibles() > 0;
     }
 
     /**
-     * Compara esta instancia de Libro con otro basado en su id para propósitos de ordenamiento.
+     * Compara esta instancia de Libro con otro basado en su id para propósitos de
+     * ordenamiento.
      * Implementación obligatoria por la interfaz Comparable.
      */
     @Override
@@ -128,8 +132,9 @@ public class Libro implements Comparable<Libro> {
     }
 
     /**
-     * Método sobrescrito para comparar igualdad entre objetos Libro basándose en su id único.
-    */
+     * Método sobrescrito para comparar igualdad entre objetos Libro basándose en su
+     * id único.
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -153,13 +158,16 @@ public class Libro implements Comparable<Libro> {
     public String toString() {
         return String.format("Libro[%s] %s - %s (%d) - %s - %s",
                 id, titulo, autor, anioPublicacion, categoria,
-                disponible ? "Disponible" : "Prestado");
+                getEjemplaresDisponibles() + " disponibles de " + getTotalEjemplares());
     }
 
     public void actualizar(Libro nuevo) throws OperacionInvalidaException {
-        validarDatos(id,nuevo.titulo,nuevo.autor,nuevo.isbn,nuevo.anioPublicacion,nuevo.categoria);
-        titulo=nuevo.titulo; autor=nuevo.autor; isbn=nuevo.isbn;
-        anioPublicacion=nuevo.anioPublicacion; categoria=nuevo.categoria;
+        validarDatos(id, nuevo.titulo, nuevo.autor, nuevo.isbn, nuevo.anioPublicacion, nuevo.categoria);
+        titulo = nuevo.titulo;
+        autor = nuevo.autor;
+        isbn = nuevo.isbn;
+        anioPublicacion = nuevo.anioPublicacion;
+        categoria = nuevo.categoria;
     }
 
 }

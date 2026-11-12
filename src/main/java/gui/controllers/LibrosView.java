@@ -110,10 +110,12 @@ public class LibrosView extends VBox {
         aplicarEfectoHover(btnEliminar, "#ec7063", "#e55e53");
 
         btnAgregar.setOnAction(_ -> mostrarDialogoAgregar());
+        Button btnEjemplares = new Button("Ejemplares");
+        btnEjemplares.setOnAction(_ -> gestionarEjemplares());
         btnEditar.setOnAction(_ -> editarLibroSeleccionado());
         btnEliminar.setOnAction(_ -> eliminarLibroSeleccionado());
 
-        toolBar.getChildren().addAll(txtBuscar, spacer, btnAgregar, btnEditar, btnEliminar);
+        toolBar.getChildren().addAll(txtBuscar, spacer, btnAgregar, btnEditar, btnEliminar, btnEjemplares);
         return toolBar;
     }
 
@@ -153,9 +155,15 @@ public class LibrosView extends VBox {
 
         TableColumn<Libro, String> colDisponible = new TableColumn<>("Estado");
         colDisponible.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().isDisponible() ? "✅ Disponible" : "❌ Prestado"));
+                cellData.getValue().getTotalEjemplares() == 0 ? "Sin ejemplares"
+                        : cellData.getValue().isDisponible() ? "✅ Disponible" : "❌ Prestado"));
         colDisponible.setPrefWidth(120);
 
+        TableColumn<Libro, String> copias = new TableColumn<>("Total / Prestados / Disponibles");
+        copias.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getTotalEjemplares()
+                + " / " + c.getValue().getEjemplaresPrestados() + " / " + c.getValue().getEjemplaresDisponibles()));
+        copias.setPrefWidth(210);
+        tablaLibros.getColumns().add(copias);
         tablaLibros.getColumns().add(colId);
         tablaLibros.getColumns().add(colTitulo);
         tablaLibros.getColumns().add(colAutor);
@@ -225,13 +233,52 @@ public class LibrosView extends VBox {
         });
     }
 
+    private void gestionarEjemplares() {
+        Libro libro = tablaLibros.getSelectionModel().getSelectedItem();
+        if (libro == null) {
+            mostrarAlerta("Ejemplares", "Seleccione un libro", Alert.AlertType.WARNING);
+            return;
+        }
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Ejemplares — " + libro.getTitulo());
+        ListView<modelo.Ejemplar> lista = new ListView<>(FXCollections.observableArrayList(libro.getEjemplares()));
+        lista.setPrefSize(570, 260);
+        Spinner<Integer> cantidad = new Spinner<>(1, 10000, 1);
+        Button agregar = new Button("Agregar copias"), retirar = new Button("Retirar seleccionado");
+        agregar.setOnAction(_ -> {
+            try {
+                gestorLibros.agregarEjemplares(libro.getId(), cantidad.getValue());
+                lista.setItems(FXCollections.observableArrayList(libro.getEjemplares()));
+                cargarLibros();
+            } catch (Exception e) {
+                mostrarAlerta("Error", e.getMessage(), Alert.AlertType.ERROR);
+            }
+        });
+        retirar.setOnAction(_ -> {
+            var ejemplar = lista.getSelectionModel().getSelectedItem();
+            if (ejemplar == null)
+                return;
+            try {
+                gestorLibros.retirarEjemplar(libro.getId(), ejemplar.getId());
+                lista.setItems(FXCollections.observableArrayList(libro.getEjemplares()));
+                cargarLibros();
+            } catch (Exception e) {
+                mostrarAlerta("Error", e.getMessage(), Alert.AlertType.ERROR);
+            }
+        });
+        dialog.getDialogPane().setContent(new VBox(12, lista, cantidad, agregar, retirar));
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.showAndWait();
+    }
+
     private void mostrarDialogoAgregar() {
         Dialog<ButtonType> dialog = new Dialog<>();
+        Spinner<Integer> copiasIniciales = new Spinner<>(1, 10000, 1);
         dialog.setTitle("Agregar Nuevo Libro");
         dialog.setHeaderText(null);
 
         dialog.getDialogPane().setPrefWidth(550);
-        dialog.getDialogPane().setPrefHeight(520);
+        dialog.getDialogPane().setPrefHeight(650);
 
         gui.BibliotecaApp.aplicarIconoADialog(dialog);
 
@@ -261,6 +308,8 @@ public class LibrosView extends VBox {
         separador.setPrefHeight(10);
 
         GridPane grid = new GridPane();
+        grid.add(new Label("Cantidad de copias:"), 0, 6);
+        grid.add(copiasIniciales, 1, 6);
         grid.setHgap(16);
         grid.setVgap(16);
         grid.setPadding(new Insets(20));
@@ -370,7 +419,7 @@ public class LibrosView extends VBox {
                 try {
                     int anioNum = Integer.parseInt(anio);
                     Libro nuevoLibro = new Libro(id, titulo, autor, isbn, anioNum, categoria);
-                    gestorLibros.agregarLibro(nuevoLibro);
+                    gestorLibros.agregarLibro(nuevoLibro, copiasIniciales.getValue());
 
                     cargarLibros();
                     mostrarAlerta("Éxito", "Libro agregado correctamente", Alert.AlertType.INFORMATION);
@@ -558,8 +607,6 @@ public class LibrosView extends VBox {
                 try {
                     int anioNum = Integer.parseInt(anio);
 
-                    boolean disponibilidadOriginal = libroSeleccionado.isDisponible();
-
                     Libro libroActualizado = new Libro(
                             libroSeleccionado.getId(),
                             titulo,
@@ -567,9 +614,7 @@ public class LibrosView extends VBox {
                             isbn,
                             anioNum,
                             categoria);
-                    if (!disponibilidadOriginal) {
-                        libroActualizado.prestar();
-                    }
+
                     gestorLibros.actualizarLibro(libroActualizado);
 
                     cargarLibros();

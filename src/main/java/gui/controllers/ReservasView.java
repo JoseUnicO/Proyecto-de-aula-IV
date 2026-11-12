@@ -141,24 +141,24 @@ public class ReservasView extends VBox {
         tabla.getColumns().addAll(columnas);
 
         tabla.setRowFactory(_ -> {
-        TableRow<Reserva> row = new TableRow<>();
-        row.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
-            final int index = row.getIndex();
+            TableRow<Reserva> row = new TableRow<>();
+            row.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
+                final int index = row.getIndex();
 
-            // Si es una fila vacía, deseleccionar
-            if (row.isEmpty()) {
-                tabla.getSelectionModel().clearSelection();
-                event.consume();
-            }
-            // Si es una fila ya seleccionada, deseleccionar
-            else if (index >= 0 && index < tabla.getItems().size()
-                    && tabla.getSelectionModel().isSelected(index)) {
-                tabla.getSelectionModel().clearSelection();
-                event.consume();
-            }
+                // Si es una fila vacía, deseleccionar
+                if (row.isEmpty()) {
+                    tabla.getSelectionModel().clearSelection();
+                    event.consume();
+                }
+                // Si es una fila ya seleccionada, deseleccionar
+                else if (index >= 0 && index < tabla.getItems().size()
+                        && tabla.getSelectionModel().isSelected(index)) {
+                    tabla.getSelectionModel().clearSelection();
+                    event.consume();
+                }
+            });
+            return row;
         });
-        return row;
-    });
 
         Label placeholder = new Label("🔖 No hay reservas registradas");
         placeholder.setFont(Font.font("Segoe UI", 16));
@@ -176,7 +176,7 @@ public class ReservasView extends VBox {
 
         Libro libro = reserva.getLibro();
 
-        if (libro.isDisponible()) {
+        if (reserva.getEstado() == Reserva.EstadoReserva.NOTIFICADA) {
             return "Disponible ahora";
         }
 
@@ -208,7 +208,7 @@ public class ReservasView extends VBox {
     }
 
     private int obtenerPosicionEnCola(Reserva reserva) {
-return gestorReservas.posicion(reserva);
+        return gestorReservas.posicion(reserva);
     }
 
     private void mostrarDialogoNuevaReserva() {

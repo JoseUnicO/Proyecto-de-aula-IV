@@ -21,6 +21,41 @@ import java.util.ArrayList;
  */
 public class GestorReservas {
 
+    public java.util.List<Reserva> obtenerReservasActivas(String idLibro) {
+        var lista = new java.util.ArrayList<Reserva>();
+        var cola = reservasPorLibro.get(idLibro);
+        if (cola != null)
+            try {
+                cola.recorrer(r -> {
+                    if (r.getEstado() == Reserva.EstadoReserva.PENDIENTE
+                            || r.getEstado() == Reserva.EstadoReserva.NOTIFICADA)
+                        lista.add(r);
+                });
+            } catch (EstructuraVaciaException vacia) {
+                return lista;
+            }
+        return lista;
+    }
+
+    public int cantidadReservasActivas(String idLibro) {
+        return obtenerReservasActivas(idLibro).size();
+    }
+
+    public boolean puedePrestar(String idLibro, String usuario, int disponibles) {
+        var cola = obtenerReservasActivas(idLibro);
+        for (int i = 0; i < Math.min(disponibles, cola.size()); i++)
+            if (cola.get(i).getUsuario().getId().equals(usuario))
+                return true;
+        return disponibles > cola.size();
+    }
+
+    public void procesarDisponibilidad(Libro libro) {
+        var cola = obtenerReservasActivas(libro.getId());
+        for (int i = 0; i < cola.size(); i++)
+            cola.get(i).restaurarEstado(i < libro.getEjemplaresDisponibles() ? Reserva.EstadoReserva.NOTIFICADA
+                    : Reserva.EstadoReserva.PENDIENTE);
+    }
+
     // Mapa que asocia el ID del libro con su cola (lista enlazada) de reservas
     private Map<String, ListaEnlazada<Reserva>> reservasPorLibro;
 
@@ -41,8 +76,8 @@ public class GestorReservas {
      *
      * @return La reserva creada.
      */
-    private Reserva agregarReservaInterno(Usuario usuario, Libro libro) throws OperacionInvalidaException  {
-        if (libro.isDisponible()) {
+    private Reserva agregarReservaInterno(Usuario usuario, Libro libro) throws OperacionInvalidaException {
+        if (libro.getEjemplaresDisponibles() > cantidadReservasActivas(libro.getId())) {
             throw new OperacionInvalidaException(
                     "No se puede crear reserva: libro disponible [" + libro.getId() + "].");
         }
@@ -59,7 +94,6 @@ public class GestorReservas {
         }
 
         reservasPorLibro.get(libro.getId()).agregarAlFinal(reserva);
-
 
         return reserva;
     }
@@ -109,8 +143,9 @@ public class GestorReservas {
      * Luego guarda el estado actualizado en persistencia.
      */
     public void procesarSiguienteReserva(String idLibro) throws EstructuraVaciaException {
-        Reserva primera=obtenerSiguienteReserva(idLibro);
-        if(primera != null && primera.getEstado()==Reserva.EstadoReserva.PENDIENTE) primera.notificar();
+        Reserva primera = obtenerSiguienteReserva(idLibro);
+        if (primera != null)
+            procesarDisponibilidad(primera.getLibro());
     }
 
     /**
@@ -134,7 +169,8 @@ public class GestorReservas {
      * Valida que la reserva exista y no haya sido cancelada previamente.
      * Cambia su estado a CANCELADA y guarda el cambio en persistencia.
      */
-    private void cancelarReservaInterno(String idReserva) throws ElementoNoEncontradoException, OperacionInvalidaException  {
+    private void cancelarReservaInterno(String idReserva)
+            throws ElementoNoEncontradoException, OperacionInvalidaException {
         for (ListaEnlazada<Reserva> cola : reservasPorLibro.values()) {
             try {
                 Reserva[] encontrada = { null };
@@ -153,7 +189,8 @@ public class GestorReservas {
 
                     encontrada[0].cancelar();
                     cola.eliminar(encontrada[0]);
-                    if(encontrada[0].getLibro().isDisponible()) procesarSiguienteReserva(encontrada[0].getLibro().getId());
+                    if (encontrada[0].getLibro().isDisponible())
+                        procesarSiguienteReserva(encontrada[0].getLibro().getId());
 
                     return;
                 }
@@ -326,13 +363,53 @@ public class GestorReservas {
         }
         return todasReservas;
     }
-public int posicion(Reserva reserva) {int n=0;for(Reserva r:obtenerTodasReservas())if(r.getLibro().getId().equals(reserva.getLibro().getId()) && r.getEstado()!=Reserva.EstadoReserva.CANCELADA){n++;if(r==reserva)return n;}return 0;}
-    public void reponer(java.util.List<Reserva> lista){reservasPorLibro.clear();for(Reserva r:lista)restaurarReserva(r);}
 
+    public int posicion(Reserva reserva) {
+        int n = 0;
+        for (Reserva r : obtenerTodasReservas())
+            if (r.getLibro().getId().equals(reserva.getLibro().getId())
+                    && r.getEstado() != Reserva.EstadoReserva.CANCELADA) {
+                n++;
+                if (r == reserva)
+                    return n;
+            }
+        return 0;
+    }
 
-public Reserva agregarReserva(Usuario usuario, Libro libro) throws OperacionInvalidaException  { return utilidades.SistemaBiblioteca.ejecutar(this, "agregarReserva", () -> {return agregarReservaInterno(usuario,libro);}); }
-public void cancelarReserva(String idReserva) throws ElementoNoEncontradoException, OperacionInvalidaException {try{utilidades.SistemaBiblioteca.ejecutar(this, "cancelarReserva", ()->{cancelarReservaInterno(idReserva);return null;});}catch(BibliotecaException e){if(e instanceof ElementoNoEncontradoException x)throw x;if(e instanceof OperacionInvalidaException x)throw x;throw new IllegalStateException(e);}}
-private utilidades.SistemaBiblioteca sistema;
- public void conectar(utilidades.SistemaBiblioteca s){sistema=s;}
- public utilidades.SistemaBiblioteca sistema(){return sistema;}
+    public void reponer(java.util.List<Reserva> lista) {
+        reservasPorLibro.clear();
+        for (Reserva r : lista)
+            restaurarReserva(r);
+    }
+
+    public Reserva agregarReserva(Usuario usuario, Libro libro) throws OperacionInvalidaException {
+        return utilidades.SistemaBiblioteca.ejecutar(this, "agregarReserva", () -> {
+            return agregarReservaInterno(usuario, libro);
+        });
+    }
+
+    public void cancelarReserva(String idReserva) throws ElementoNoEncontradoException, OperacionInvalidaException {
+        try {
+            utilidades.SistemaBiblioteca.ejecutar(this, "cancelarReserva", () -> {
+                cancelarReservaInterno(idReserva);
+                return null;
+            });
+        } catch (BibliotecaException e) {
+            if (e instanceof ElementoNoEncontradoException x)
+                throw x;
+            if (e instanceof OperacionInvalidaException x)
+                throw x;
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private utilidades.SistemaBiblioteca sistema;
+
+    public void conectar(utilidades.SistemaBiblioteca s) {
+        sistema = s;
+    }
+
+    public utilidades.SistemaBiblioteca sistema() {
+        return sistema;
+    }
 }

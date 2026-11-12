@@ -383,28 +383,48 @@ public class DashboardController {
     }
 
     private void mostrarLibros() {
-        try{BibliotecaApp.actualizar();}catch(Exception e){new Alert(Alert.AlertType.ERROR,e.getMessage()).showAndWait();return;}
+        try {
+            BibliotecaApp.actualizar();
+        } catch (Exception e) {
+            new Alert(Alert.AlertType.ERROR, e.getMessage()).showAndWait();
+            return;
+        }
         LibrosView librosView = new LibrosView(gestorLibros);
         contentArea.getChildren().clear();
         contentArea.getChildren().add(librosView);
     }
 
     private void mostrarUsuarios() {
-        try{BibliotecaApp.actualizar();}catch(Exception e){new Alert(Alert.AlertType.ERROR,e.getMessage()).showAndWait();return;}
+        try {
+            BibliotecaApp.actualizar();
+        } catch (Exception e) {
+            new Alert(Alert.AlertType.ERROR, e.getMessage()).showAndWait();
+            return;
+        }
         UsuariosView usuariosView = new UsuariosView(gestorUsuarios);
         contentArea.getChildren().clear();
         contentArea.getChildren().add(usuariosView);
     }
 
     private void mostrarPrestamos() {
-        try{BibliotecaApp.actualizar();}catch(Exception e){new Alert(Alert.AlertType.ERROR,e.getMessage()).showAndWait();return;}
+        try {
+            BibliotecaApp.actualizar();
+        } catch (Exception e) {
+            new Alert(Alert.AlertType.ERROR, e.getMessage()).showAndWait();
+            return;
+        }
         PrestamosView prestamosView = new PrestamosView(gestorPrestamos, gestorLibros, gestorUsuarios);
         contentArea.getChildren().clear();
         contentArea.getChildren().add(prestamosView);
     }
 
     private void mostrarReservas() {
-        try{BibliotecaApp.actualizar();}catch(Exception e){new Alert(Alert.AlertType.ERROR,e.getMessage()).showAndWait();return;}
+        try {
+            BibliotecaApp.actualizar();
+        } catch (Exception e) {
+            new Alert(Alert.AlertType.ERROR, e.getMessage()).showAndWait();
+            return;
+        }
         ReservasView reservasView = new ReservasView(
                 BibliotecaApp.getGestorReservas(),
                 gestorLibros,
@@ -414,7 +434,12 @@ public class DashboardController {
     }
 
     private void mostrarReportes() {
-        try{BibliotecaApp.actualizar();}catch(Exception e){new Alert(Alert.AlertType.ERROR,e.getMessage()).showAndWait();return;}
+        try {
+            BibliotecaApp.actualizar();
+        } catch (Exception e) {
+            new Alert(Alert.AlertType.ERROR, e.getMessage()).showAndWait();
+            return;
+        }
         ReportesView reportesView = new ReportesView(gestorLibros, gestorUsuarios, gestorPrestamos);
         contentArea.getChildren().clear();
         contentArea.getChildren().add(reportesView);

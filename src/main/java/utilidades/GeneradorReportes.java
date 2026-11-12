@@ -24,10 +24,13 @@ public class GeneradorReportes {
         System.out.println("=".repeat(60));
 
         System.out.println("\n📊 ESTADÍSTICAS GENERALES:");
+        System.out.println("   • Total de ejemplares: "
+                + gestorLibros.obtenerTodosLibros().stream().mapToInt(Libro::getTotalEjemplares).sum());
         System.out.println("   • Total de libros en el sistema: " + gestorLibros.getTotalLibros());
-        System.out.println("   • Libros disponibles: " + gestorLibros.contarLibrosDisponibles());
-        System.out.println("   • Libros prestados: " +
-                (gestorLibros.getTotalLibros() - gestorLibros.contarLibrosDisponibles()));
+        System.out.println("   • Ejemplares disponibles: "
+                + gestorLibros.obtenerTodosLibros().stream().mapToInt(Libro::getEjemplaresDisponibles).sum());
+        System.out.println("   • Ejemplares prestados: " +
+                gestorPrestamos.contarPrestamosActivos());
         System.out.println("   • Total de usuarios registrados: " + gestorUsuarios.getTotalUsuarios());
         System.out.println("   • Préstamos activos: " + gestorPrestamos.contarPrestamosActivos());
         System.out.println("   • Historial total de préstamos: " + gestorPrestamos.contarHistorial());
@@ -56,13 +59,19 @@ public class GeneradorReportes {
                             .println(String.format("   • %s: %d libro(s)", entry.getKey(), entry.getValue())));
 
             System.out.println("\n📖 DISPONIBILIDAD:");
-            System.out.println("   • Libros disponibles: " + gestorLibros.contarLibrosDisponibles());
-            System.out.println("   • Libros prestados: " +
-                    (gestorLibros.getTotalLibros() - gestorLibros.contarLibrosDisponibles()));
+            System.out.println("   • Ejemplares disponibles: "
+                    + gestorLibros.obtenerTodosLibros().stream().mapToInt(Libro::getEjemplaresDisponibles).sum());
+            System.out.println("   • Ejemplares prestados: " +
+                    gestorPrestamos.contarPrestamosActivos());
 
-            double tasaDisponibilidad = gestorLibros.getTotalLibros() > 0
-                    ? (gestorLibros.contarLibrosDisponibles() * 100.0 / gestorLibros.getTotalLibros())
-                    : 0;
+            double tasaDisponibilidad = gestorLibros.obtenerTodosLibros().stream().mapToInt(Libro::getTotalEjemplares)
+                    .sum() > 0
+                            ? (gestorLibros.obtenerTodosLibros().stream().mapToInt(Libro::getEjemplaresDisponibles)
+                                    .sum()
+                                    * 100.0
+                                    / gestorLibros.obtenerTodosLibros().stream().mapToInt(Libro::getTotalEjemplares)
+                                            .sum())
+                            : 0;
             System.out.println(String.format("   • Tasa de disponibilidad: %.1f%%", tasaDisponibilidad));
 
         } catch (Exception e) {
@@ -146,10 +155,12 @@ public class GeneradorReportes {
                 System.out.println(String.format("   • Tasa de vencimiento: %.1f%%", tasaVencimiento));
             }
 
-            System.out.println("   • Total de cancelaciones: " + gestorPrestamos.obtenerTodosPrestamos().stream().filter(p -> p.getEstado()==Prestamo.EstadoPrestamo.CANCELADO).count());
+            System.out.println("   • Total de cancelaciones: " + gestorPrestamos.obtenerTodosPrestamos().stream()
+                    .filter(p -> p.getEstado() == Prestamo.EstadoPrestamo.CANCELADO).count());
             if (historialTotal > 0) {
                 System.out.println("\n[OK] DEVOLUCIONES:");
-                System.out.println("   • Total de devoluciones: " + gestorPrestamos.obtenerTodosPrestamos().stream().filter(p -> p.getEstado()==Prestamo.EstadoPrestamo.DEVUELTO).count());
+                System.out.println("   • Total de devoluciones: " + gestorPrestamos.obtenerTodosPrestamos().stream()
+                        .filter(p -> p.getEstado() == Prestamo.EstadoPrestamo.DEVUELTO).count());
             }
 
         } catch (Exception e) {
